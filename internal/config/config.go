@@ -9,12 +9,12 @@ import (
 type VM struct {
 	Name  string   `yaml:"name"`
 	ID    int      `yaml:"id"`
+	IsVM  bool     `yaml:"is_vm"`
 	Disks []string `yaml:"disks"`
 }
 
 type Restic struct {
-	Repo     string `yaml:"repo"`
-	Password string `yaml:"password"`
+	EnvVars map[string]string `yaml:",inline"`
 }
 type Backup struct {
 	Dir string `yaml:"dir"`

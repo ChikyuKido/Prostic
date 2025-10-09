@@ -1,11 +1,11 @@
 vms:
   - name: networking
     id: 101
+    is_vm: true
     disks:
       - /dev/pve/vm-101-disk-0
-
 restic:
-  repo: /mnt/share/backups/restic
-  password: test
+  REPOSITORY: /mnt/share/backup/restic
+  PASSWORD: test
 backup:
-  dir: /mnt/share/backup
+  dir: /mnt/share/backup/local
