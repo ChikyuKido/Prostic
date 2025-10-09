@@ -47,7 +47,7 @@ func RunBackup() error {
 		}
 	}
 	log.Infof("Finished backuping the vm's to local storage. Will not upload to restic")
-	if err := runResticBackup(); err != nil {
+	if err := util.RunResticCommand(true, "backup", config.Get().Backup.Dir); err != nil {
 		return fmt.Errorf("could not backup restic: %v", err)
 	}
 	log.Infof("Backup completed successfully")
@@ -132,28 +132,8 @@ func removeSnapshot(snapName string) error {
 	return nil
 }
 
-func runResticBackup() error {
-	env := os.Environ()
-	for key, val := range config.Get().Restic.EnvVars {
-		env = append(env, key+"="+val)
-	}
-	cmd := exec.Command("restic", "backup", config.Get().Backup.Dir)
-	cmd.Env = env
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	if err := cmd.Run(); err != nil {
-		return fmt.Errorf("restic backup failed: %v", err)
-	}
-	return nil
-}
 func isResticConfigCorrect() bool {
-	env := os.Environ()
-	for key, val := range config.Get().Restic.EnvVars {
-		env = append(env, key+"="+val)
-	}
-	cmd := exec.Command("restic", "snapshots")
-	cmd.Env = env
-	_, err := cmd.CombinedOutput()
+	err := util.RunResticCommand(false, "snapshots")
 	return err == nil
 }
 

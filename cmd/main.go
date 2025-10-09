@@ -16,6 +16,7 @@ func main() {
 	configPath := flag.String("config", "config.yaml", "path to configuration file")
 	verbose := flag.Bool("v", false, "enable verbose logging")
 	logPath := flag.String("logpath", "/tmp/vmrestic.log", "path to log file")
+	runRestic := flag.Bool("restic", false, "run restic command instead of backup")
 	flag.Parse()
 
 	logFile, err := os.OpenFile(*logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
@@ -33,6 +34,18 @@ func main() {
 	err = config.Load(*configPath)
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
+	}
+	if *runRestic {
+		log.Info("Running restic command mode")
+		args := flag.Args()
+		if len(args) == 0 {
+			log.Fatal("no restic arguments provided")
+		}
+		err = util.RunResticCommand(true, args...)
+		if err != nil {
+			log.Fatalf("restic command failed: %v", err)
+		}
+		return
 	}
 	err = backup.RunBackup()
 	if err != nil {

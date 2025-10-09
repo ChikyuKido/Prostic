@@ -4,6 +4,7 @@ vms:
     is_vm: true
     disks:
       - /dev/pve/vm-101-disk-0
+
 restic:
   REPOSITORY: /mnt/share/backup/restic
   PASSWORD: test
