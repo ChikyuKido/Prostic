@@ -84,20 +84,19 @@ func runVMBackup(vm config.VM) error {
 			return fmt.Errorf("failed to create snapshot for %s: %v\n%s", disk, err, string(out))
 		}
 		log.Infof("Created snapshot for %s", disk)
-
-		snapPath := filepath.Join("/dev", "pve", snapName)
-		destFile := filepath.Join(vmDir, lvName+".raw")
+		snapPath := filepath.Join(filepath.Dir(disk), snapName)
+		destFile := filepath.Join(vmDir, strings.Split(disk, "/")[1]+lvName+".raw")
 
 		dd := exec.Command("dd", "if="+snapPath, "of="+destFile, "bs=1M", "status=progress", "conv=sparse")
 		dd.Stdout = os.Stdout
 		dd.Stderr = os.Stderr
 		log.Infof("Starting dd copy of %s to %s", snapPath, destFile)
 		if err := dd.Run(); err != nil {
-			removeSnapshot(snapName)
+			removeSnapshot(snapPath)
 			return fmt.Errorf("dd failed for %s: %v", snapPath, err)
 		}
 		log.Infof("Disk %s backed up to %s", disk, destFile)
-		if err := removeSnapshot(snapName); err != nil {
+		if err := removeSnapshot(snapPath); err != nil {
 			return err
 		}
 	}
@@ -122,13 +121,13 @@ func runVMBackup(vm config.VM) error {
 	return nil
 }
 
-func removeSnapshot(snapName string) error {
-	cmd := exec.Command("lvremove", "-f", "/dev/pve/"+snapName)
+func removeSnapshot(path string) error {
+	cmd := exec.Command("lvremove", "-f", path)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to remove snapshot %s: %v\n%s", snapName, err, string(out))
+		return fmt.Errorf("failed to remove snapshot %s: %v\n%s", path, err, string(out))
 	}
-	log.Infof("Snapshot %s removed", snapName)
+	log.Infof("Snapshot %s removed", path)
 	return nil
 }
 
