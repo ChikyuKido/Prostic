@@ -17,7 +17,6 @@ type Restic struct {
 	EnvVars map[string]string `yaml:",inline"`
 }
 type Backup struct {
-	Dir string `yaml:"dir"`
 }
 type Config struct {
 	VMs    []VM   `yaml:"vms"`

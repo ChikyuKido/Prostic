@@ -6,7 +6,5 @@ vms:
       - /dev/pve/vm-101-disk-0
 
 restic:
-  REPOSITORY: /mnt/share/backup/restic
-  PASSWORD: test
-backup:
-  dir: /mnt/share/backup/local
+  RESTIC_REPOSITORY: /mnt/backup/restic
+  RESTIC_PASSWORD: test

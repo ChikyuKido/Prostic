@@ -5,7 +5,10 @@ import (
 	"os"
 	"os/exec"
 	"prostic/internal/config"
+	"strings"
 )
+
+var resticLog = GroupLogger("RESTIC")
 
 func RunResticCommand(showOutput bool, args ...string) error {
 	env := os.Environ()
@@ -14,6 +17,7 @@ func RunResticCommand(showOutput bool, args ...string) error {
 	}
 
 	cmd := exec.Command("restic", args...)
+	resticLog.Infof("Running RESTIC command: %s", strings.Join(cmd.Args, " "))
 	cmd.Env = env
 
 	if showOutput {
