@@ -16,7 +16,7 @@ func RunResticCommand(showOutput bool, args ...string) error {
 		env = append(env, key+"="+val)
 	}
 
-	cmd := exec.Command("restic", args...)
+	cmd := exec.Command("/usr/bin/restic", args...)
 	resticLog.Infof("Running RESTIC command: %s", strings.Join(cmd.Args, " "))
 	cmd.Env = env
 

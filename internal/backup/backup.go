@@ -54,7 +54,7 @@ func runVMBackup(vm config.VM, backupID string) error {
 				return err
 			}
 		}
-		cmd := exec.Command("lvcreate", "-s", "-n", snapName, "-L", "5G", disk)
+		cmd := exec.Command("/usr/sbin/lvcreate", "-s", "-n", snapName, "-L", "5G", disk)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to create snapshot for %s: %v\n%s", disk, err, string(out))
@@ -67,10 +67,12 @@ func runVMBackup(vm config.VM, backupID string) error {
 			"--tag", fmt.Sprintf("destFile=%s", destFile),
 			"--tag", fmt.Sprintf("srcFile=%s", disk),
 			"--tag", fmt.Sprintf("id=%s", backupID),
+			"--tag", fmt.Sprintf("vmtype=%s", vmPrefix),
+			"--tag", fmt.Sprintf("name=%s", vm.Name),
 			"--tag", "type=disk",
 			"--tag", fmt.Sprintf("date=%s", today),
 			"--",
-			"dd", "if="+snapPath, "bs=4M")
+			"/bin/dd", "if="+snapPath, "bs=4M")
 		if err != nil {
 			removeSnapshot(snapPath)
 			return fmt.Errorf("restic backup failed for %s: %v", snapPath, err)
@@ -98,8 +100,10 @@ func runVMBackup(vm config.VM, backupID string) error {
 			"--tag", "type=config",
 			"--tag", fmt.Sprintf("id=%s", backupID),
 			"--tag", fmt.Sprintf("date=%s", today),
+			"--tag", fmt.Sprintf("vmtype=%s", vmPrefix),
+			"--tag", fmt.Sprintf("name=%s", vm.Name),
 			"--",
-			"dd", "if="+srcConfig, "bs=4M")
+			"/bin/dd", "if="+srcConfig, "bs=4M")
 		log.Infof("Config copied to %s", destConfig)
 	} else {
 		log.Warnf("Config file %s not found, skipping", srcConfig)
@@ -108,7 +112,7 @@ func runVMBackup(vm config.VM, backupID string) error {
 }
 
 func removeSnapshot(path string) error {
-	cmd := exec.Command("lvremove", "-f", path)
+	cmd := exec.Command("/usr/sbin/lvremove", "-f", path)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return fmt.Errorf("failed to remove snapshot %s: %v\n%s", path, err, string(out))
