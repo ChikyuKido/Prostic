@@ -7,6 +7,7 @@ import (
 	"os"
 	"prostic/internal/backup"
 	"prostic/internal/config"
+	"prostic/internal/restic"
 	"prostic/internal/util"
 )
 
@@ -17,6 +18,9 @@ func main() {
 	verbose := flag.Bool("v", false, "enable verbose logging")
 	logPath := flag.String("logpath", "/tmp/vmrestic.log", "path to log file")
 	runRestic := flag.Bool("restic", false, "run restic command instead of backup")
+	runBackup := flag.Bool("backup", false, "run backup command instead of restore")
+	runStatus := flag.Bool("status", false, "run backup status command instead of restore")
+	runList := flag.Bool("list", false, "run backup list command instead of restore")
 	flag.Parse()
 
 	logFile, err := os.OpenFile(*logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
@@ -41,14 +45,29 @@ func main() {
 		if len(args) == 0 {
 			log.Fatal("no restic arguments provided")
 		}
-		err = util.RunResticCommand(true, args...)
+		err = restic.RunResticCommand(true, args...)
 		if err != nil {
 			log.Fatalf("restic command failed: %v", err)
 		}
 		return
+	} else if *runBackup {
+		err = backup.RunBackup()
+		if err != nil {
+			log.Fatalf("failed to run backup: %v", err)
+		}
+		return
+	} else if *runStatus {
+		err = backup.PrintStats()
+		if err != nil {
+			log.Fatalf("failed to print stats: %v", err)
+		}
+	} else if *runList {
+		err = backup.ListBackups()
+		if err != nil {
+			log.Fatalf("failed to list backups: %v", err)
+		}
+	} else {
+		log.Errorf("No execute flag set like: backup,restore,status,restic")
 	}
-	err = backup.RunBackup()
-	if err != nil {
-		log.Fatalf("failed to run backup: %v", err)
-	}
+
 }
