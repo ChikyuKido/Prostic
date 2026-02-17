@@ -8,7 +8,6 @@ import (
 	"os"
 	"os/exec"
 	"prostic/internal/config"
-	"prostic/internal/util"
 	"strings"
 	"time"
 )
@@ -31,8 +30,6 @@ type Stats struct {
 	SnapshotsCount         int64   `json:"snapshots_count"`
 }
 
-var resticLog = util.GroupLogger("RESTIC")
-
 func RunResticCommand(showOutput bool, args ...string) error {
 	env := os.Environ()
 	for key, val := range config.Get().Restic.EnvVars {
@@ -40,7 +37,6 @@ func RunResticCommand(showOutput bool, args ...string) error {
 	}
 
 	cmd := exec.Command("/usr/bin/restic", args...)
-	resticLog.Debugf("Running RESTIC command: %s", strings.Join(cmd.Args, " "))
 	cmd.Env = env
 
 	if showOutput {
@@ -65,7 +61,6 @@ func RunResticOutput(args ...string) (string, error) {
 		env = append(env, key+"="+val)
 	}
 	cmd := exec.Command("/usr/bin/restic", args...)
-	resticLog.Debugf("Running RESTIC command: %s", strings.Join(cmd.Args, " "))
 	cmd.Env = env
 
 	out, err := cmd.CombinedOutput()

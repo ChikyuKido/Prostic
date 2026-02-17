@@ -4,14 +4,11 @@ import (
 	"errors"
 	"fmt"
 	"prostic/internal/restic"
-	"prostic/internal/util"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 )
-
-var statsLog = util.GroupLogger("STATS")
 
 var (
 	cBlue  = "\033[94m"

@@ -88,6 +88,7 @@ func runVMBackup(vm config.VM, backupID string) error {
 			"/bin/dd", "if=" + snapPath, "bs=4M",
 		}
 
+		fmt.Printf("\r%s", renderBar(1, 1))
 		err = restic.RunResticJSONStream(args, func(obj map[string]interface{}) { handleResticMsg(obj, totalGB) })
 		_ = removeSnapshot(snapPath)
 		if err != nil {
@@ -122,9 +123,8 @@ func runVMBackup(vm config.VM, backupID string) error {
 			"--",
 			"/bin/dd", "if=" + srcConfig, "bs=4M",
 		}
-
-		err := restic.RunResticJSONStream(args, func(obj map[string]interface{}) { handleResticMsg(obj, 1.0/1024/1024) })
-		fmt.Println()
+		err := restic.RunResticCommand(false, args...)
+		fmt.Println(cGreen + "Finished Config " + cReset + srcConfig)
 		if err != nil {
 			return fmt.Errorf("restic backup failed for config %s: %v", srcConfig, err)
 		}
