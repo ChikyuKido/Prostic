@@ -1,3 +1,6 @@
 .idea
 build.sh
 prostic
+internal/embed/dist
+.cache
+data

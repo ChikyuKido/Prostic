@@ -58,10 +58,30 @@ func runVMBackup(vm config.VM, backupID string) error {
 			}
 		}
 
-		cmd := exec.Command("/usr/sbin/lvcreate", "-s", "-n", snapName, "-L", "5G", disk)
+		isThin, err := isThinLV(disk)
+		if err != nil {
+			return err
+		}
+		fmt.Println(isThin)
+		var cmd *exec.Cmd
+		if isThin {
+			cmd = exec.Command("/usr/sbin/lvcreate", "-s", "-n", snapName, disk)
+		} else {
+			cmd = exec.Command("/usr/sbin/lvcreate", "-s", "-n", snapName, "-L", "5G", disk)
+		}
+
 		out, err := cmd.CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to create snapshot for %s: %v\n%s", disk, err, string(out))
+		}
+
+		if isThin {
+			cmd = exec.Command("/usr/sbin/lvchange", "-ay", "-Ky", snapPath)
+			out, err = cmd.CombinedOutput()
+			if err != nil {
+				_ = removeSnapshot(snapPath)
+				return fmt.Errorf("failed to activate thin snapshot %s: %v\n%s", snapPath, err, string(out))
+			}
 		}
 
 		totalGB := probeLVSizeGB(disk)
@@ -155,6 +175,21 @@ func randomID(n int) string {
 		id[i] = charset[rand.Intn(len(charset))]
 	}
 	return string(id)
+}
+
+func isThinLV(lvPath string) (bool, error) {
+	cmd := exec.Command("/usr/sbin/lvs", "--noheadings", "-o", "lv_attr", lvPath)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return false, fmt.Errorf("failed to inspect lv %s: %v\n%s", lvPath, err, string(out))
+	}
+
+	attr := strings.TrimSpace(string(out))
+	if attr == "" {
+		return false, fmt.Errorf("empty lv_attr for %s", lvPath)
+	}
+
+	return attr[0] == 'V', nil
 }
 
 func handleResticMsg(obj map[string]interface{}, totalGB float64) {

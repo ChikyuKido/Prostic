@@ -8,6 +8,7 @@ import (
 	"prostic/internal/backup"
 	"prostic/internal/config"
 	"prostic/internal/restic"
+	"prostic/internal/server"
 	"prostic/internal/util"
 )
 
@@ -17,6 +18,9 @@ var (
 	configPath string
 	verbose    bool
 	logPath    string
+	serverMode bool
+	serverAddr string
+	logFile    *os.File
 )
 
 func main() {
@@ -43,13 +47,24 @@ func main() {
 				Usage:       "Path to log file",
 				Destination: &logPath,
 			},
+			&cli.BoolFlag{
+				Name:        "server",
+				Usage:       "Start the web server",
+				Destination: &serverMode,
+			},
+			&cli.StringFlag{
+				Name:        "server-addr",
+				Value:       ":8080",
+				Usage:       "Address for the web server",
+				Destination: &serverAddr,
+			},
 		},
 		Before: func(c *cli.Context) error {
-			logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+			var err error
+			logFile, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 			if err != nil {
 				logrus.Fatalf("failed to open log file %s: %v", logPath, err)
 			}
-			defer logFile.Close()
 
 			multiWriter := io.MultiWriter(os.Stdout, logFile)
 			logrus.SetOutput(multiWriter)
@@ -62,6 +77,17 @@ func main() {
 			if err != nil {
 				return cli.Exit("Failed to load config: "+err.Error(), 1)
 			}
+			return nil
+		},
+		Action: func(c *cli.Context) error {
+			if !serverMode {
+				return cli.ShowAppHelp(c)
+			}
+
+			if err := server.Start(serverAddr); err != nil {
+				return cli.Exit("Failed to start server: "+err.Error(), 1)
+			}
+
 			return nil
 		},
 		Commands: []*cli.Command{
@@ -119,5 +145,9 @@ func main() {
 
 	if err := app.Run(os.Args); err != nil {
 		log.Fatalf("Application error: %v", err)
+	}
+
+	if logFile != nil {
+		_ = logFile.Close()
 	}
 }
