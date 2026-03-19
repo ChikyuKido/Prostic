@@ -40,3 +40,14 @@ func UpdatePassword(passwordHash string, needsPasswordChange bool) error {
 			"needs_password_change": needsPasswordChange,
 		}).Error
 }
+
+func UpdateBackupCron(expression string) error {
+	database, err := db.Get()
+	if err != nil {
+		return err
+	}
+
+	return database.Model(&models.Setting{}).
+		Where("id = ?", 1).
+		Update("backup_cron", expression).Error
+}

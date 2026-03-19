@@ -40,7 +40,7 @@ func Get() (*gorm.DB, error) {
 			return
 		}
 
-		initErr = instance.AutoMigrate(&models.Setting{}, &models.Snapshot{})
+		initErr = instance.AutoMigrate(&models.Setting{}, &models.Snapshot{}, &models.RepoStat{}, &models.Task{}, &models.BackupRun{})
 		if initErr != nil {
 			return
 		}
@@ -70,6 +70,7 @@ func ensureDefaultSettings() error {
 		ID:                  1,
 		PasswordHash:        passwordHash,
 		NeedsPasswordChange: true,
+		BackupCron:          "",
 	}
 
 	return instance.Create(&settings).Error
