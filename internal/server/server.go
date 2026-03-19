@@ -9,14 +9,20 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 
 	"prostic/internal/db"
 	embedded "prostic/internal/embed"
 	authroutes "prostic/internal/server/routes/auth"
+	backuproutes "prostic/internal/server/routes/backup"
+	configroutes "prostic/internal/server/routes/config"
 	overviewroutes "prostic/internal/server/routes/overview"
+	refreshroutes "prostic/internal/server/routes/refresh"
 	snapshotroutes "prostic/internal/server/routes/snapshots"
+	taskroutes "prostic/internal/server/routes/tasks"
+	backupservice "prostic/internal/service/backups"
 )
 
 func Start(addr string) error {
@@ -26,11 +32,28 @@ func Start(addr string) error {
 
 	engine := gin.Default()
 	authroutes.InitAuthRouter(engine)
+	backuproutes.InitBackupRouter(engine)
+	configroutes.InitConfigRouter(engine)
 	overviewroutes.InitOverviewRouter(engine)
+	refreshroutes.InitRefreshRouter(engine)
 	snapshotroutes.InitSnapshotsRouter(engine)
+	taskroutes.InitTasksRouter(engine)
 	registerStaticRoutes(engine)
+	startSchedulers()
 
 	return engine.Run(addr)
+}
+
+func startSchedulers() {
+	go func() {
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		for {
+			backupservice.SchedulerTick(time.Now().In(time.Local))
+			<-ticker.C
+		}
+	}()
 }
 
 func registerStaticRoutes(engine *gin.Engine) {

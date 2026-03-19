@@ -39,30 +39,32 @@ async function submit() {
 </script>
 
 <template>
-  <Card class="w-full max-w-md border-border/60 bg-card/95 backdrop-blur-sm">
-    <CardHeader class="space-y-2">
-      <CardTitle class="text-2xl">Prostic Admin</CardTitle>
-      <CardDescription>Enter the admin password to access the web UI.</CardDescription>
-    </CardHeader>
-    <CardContent>
-      <form class="space-y-4" @submit.prevent="submit">
-        <div class="space-y-2">
-          <div class="text-sm font-medium text-foreground">Password</div>
-          <Input
-            v-model="password"
-            type="password"
-            autocomplete="current-password"
-            placeholder="Enter password"
-          />
-        </div>
-        <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
-        <Button class="w-full" :disabled="loading" type="submit">
-          {{ loading ? 'Please wait...' : 'Login' }}
-        </Button>
-      </form>
-    </CardContent>
-    <CardFooter class="text-sm text-muted-foreground">
-      First login uses the default password `admin` until it is changed.
-    </CardFooter>
-  </Card>
+  <div class="flex min-h-screen items-center justify-center px-6 py-10">
+    <Card class="w-full max-w-md border-border/60 bg-card/95 backdrop-blur-sm">
+      <CardHeader class="space-y-2">
+        <CardTitle class="text-2xl">Prostic Admin</CardTitle>
+        <CardDescription>Enter the admin password to access the web UI.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form class="space-y-4" @submit.prevent="submit">
+          <div class="space-y-2">
+            <div class="text-sm font-medium text-foreground">Password</div>
+            <Input
+              v-model="password"
+              type="password"
+              autocomplete="current-password"
+              placeholder="Enter password"
+            />
+          </div>
+          <p v-if="error" class="text-sm text-destructive">{{ error }}</p>
+          <Button class="w-full" :disabled="loading" type="submit">
+            {{ loading ? 'Please wait...' : 'Login' }}
+          </Button>
+        </form>
+      </CardContent>
+      <CardFooter class="text-sm text-muted-foreground">
+        First login uses the default password `admin` until it is changed.
+      </CardFooter>
+    </Card>
+  </div>
 </template>
