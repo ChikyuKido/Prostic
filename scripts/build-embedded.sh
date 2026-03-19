@@ -5,9 +5,6 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WEB_DIR="$ROOT_DIR/web"
 DIST_DIR="$ROOT_DIR/internal/embed/dist"
 BINARY_NAME="${1:-prostic}"
-GO_CACHE_DIR="${GOCACHE:-$ROOT_DIR/.cache/go-build}"
-
-mkdir -p "$GO_CACHE_DIR"
 
 echo "[*] Building web UI..."
 (
@@ -26,7 +23,7 @@ echo "[*] Compressing web assets with gzip..."
 echo "[*] Building Go binary with embedded assets..."
 (
   cd "$ROOT_DIR"
-  GOCACHE="$GO_CACHE_DIR" GOOS=linux GOARCH=amd64 go build -o "$BINARY_NAME" ./cmd
+  GOOS=linux GOARCH=amd64 go build -o "$BINARY_NAME" ./cmd
 )
 
 echo "[✓] Built $BINARY_NAME"

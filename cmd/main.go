@@ -1,26 +1,17 @@
 package main
 
 import (
-	"github.com/sirupsen/logrus"
+	"fmt"
 	"github.com/urfave/cli/v2"
-	"io"
 	"os"
-	"prostic/internal/backup"
+
 	"prostic/internal/config"
 	"prostic/internal/restic"
 	"prostic/internal/server"
-	"prostic/internal/util"
 )
-
-var log = util.GroupLogger("MAIN")
 
 var (
 	configPath string
-	verbose    bool
-	logPath    string
-	serverMode bool
-	serverAddr string
-	logFile    *os.File
 )
 
 func main() {
@@ -36,90 +27,23 @@ func main() {
 				Usage:       "Path to configuration file",
 				Destination: &configPath,
 			},
-			&cli.BoolFlag{
-				Name:        "verbose",
-				Usage:       "Enable verbose logging",
-				Destination: &verbose,
-			},
-			&cli.StringFlag{
-				Name:        "logpath",
-				Value:       "/tmp/vmrestic.log",
-				Usage:       "Path to log file",
-				Destination: &logPath,
-			},
-			&cli.BoolFlag{
-				Name:        "server",
-				Usage:       "Start the web server",
-				Destination: &serverMode,
-			},
-			&cli.StringFlag{
-				Name:        "server-addr",
-				Value:       ":8080",
-				Usage:       "Address for the web server",
-				Destination: &serverAddr,
-			},
 		},
 		Before: func(c *cli.Context) error {
-			var err error
-			logFile, err = os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-			if err != nil {
-				logrus.Fatalf("failed to open log file %s: %v", logPath, err)
-			}
-
-			multiWriter := io.MultiWriter(os.Stdout, logFile)
-			logrus.SetOutput(multiWriter)
-			if verbose {
-				logrus.SetLevel(logrus.DebugLevel)
-			} else {
-				logrus.SetLevel(logrus.InfoLevel)
-			}
-			err = config.Load(configPath)
-			if err != nil {
+			if err := config.Load(configPath); err != nil {
 				return cli.Exit("Failed to load config: "+err.Error(), 1)
 			}
 			return nil
 		},
 		Action: func(c *cli.Context) error {
-			if !serverMode {
-				return cli.ShowAppHelp(c)
-			}
-
-			if err := server.Start(serverAddr); err != nil {
-				return cli.Exit("Failed to start server: "+err.Error(), 1)
-			}
-
-			return nil
+			return cli.ShowAppHelp(c)
 		},
 		Commands: []*cli.Command{
 			{
-				Name:  "backup",
-				Usage: "Run the full backup process",
+				Name:  "server",
+				Usage: "Start the web server",
 				Action: func(c *cli.Context) error {
-					err := backup.RunBackup()
-					if err != nil {
-						return cli.Exit("Failed to run backup: "+err.Error(), 1)
-					}
-					return nil
-				},
-			},
-			{
-				Name:  "status",
-				Usage: "Print the current backup statistics",
-				Action: func(c *cli.Context) error {
-					err := backup.PrintStats()
-					if err != nil {
-						return cli.Exit("Failed to print stats: "+err.Error(), 1)
-					}
-					return nil
-				},
-			},
-			{
-				Name:  "list",
-				Usage: "List all existing backups",
-				Action: func(c *cli.Context) error {
-					err := backup.ListBackups()
-					if err != nil {
-						return cli.Exit("Failed to list backups: "+err.Error(), 1)
+					if err := server.Start(":8080"); err != nil {
+						return cli.Exit("Failed to start server: "+err.Error(), 1)
 					}
 					return nil
 				},
@@ -144,10 +68,7 @@ func main() {
 	}
 
 	if err := app.Run(os.Args); err != nil {
-		log.Fatalf("Application error: %v", err)
-	}
-
-	if logFile != nil {
-		_ = logFile.Close()
+		_, _ = fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
 	}
 }
