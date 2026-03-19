@@ -166,3 +166,11 @@ func GetStats() (*Stats, error) {
 	}
 	return &s, nil
 }
+
+func DeleteSnapshots(snapshotIDs []string) (string, error) {
+	args := make([]string, 0, len(snapshotIDs)+2)
+	args = append(args, "forget", "--prune")
+	args = append(args, snapshotIDs...)
+
+	return RunResticOutput(args...)
+}
