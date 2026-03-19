@@ -9,6 +9,7 @@ import (
 
 	"prostic/internal/db/models"
 	"prostic/internal/db/repo"
+	cacheservice "prostic/internal/service/cache"
 	runnerservice "prostic/internal/service/runner"
 )
 
@@ -155,14 +156,37 @@ func StartBackup(trigger string) (*models.BackupRun, error) {
 
 		err := RunBackupWithObserver(observer)
 		finalLogs := logs.String()
+		backupID := getLiveStatus().BackupID
+		completedItems := getLiveStatus().CompletedItems
+
+		setLiveStatus(func(status *LiveStatus) {
+			status.LastMessage = "Refreshing cache"
+			status.CurrentBytesDone = 0
+			status.CurrentBytesTotal = 0
+			status.CurrentItemStarted = nil
+		})
+
+		refreshResult, refreshErr := cacheservice.RefreshAll()
+		if refreshErr != nil {
+			if finalLogs != "" && !strings.HasSuffix(finalLogs, "\n") {
+				finalLogs += "\n"
+			}
+			finalLogs += fmt.Sprintf("Cache refresh failed: %v", refreshErr)
+		} else if refreshResult != nil {
+			if finalLogs != "" && !strings.HasSuffix(finalLogs, "\n") {
+				finalLogs += "\n"
+			}
+			finalLogs += fmt.Sprintf("Cache refresh finished. Snapshots cached: %d", refreshResult.SnapshotCount)
+		}
+
 		if err != nil {
 			if finalLogs != "" && !strings.HasSuffix(finalLogs, "\n") {
 				finalLogs += "\n"
 			}
 			finalLogs += fmt.Sprintf("Error: %v", err)
-			_ = repo.FinishBackupRun(run.ID, StatusFailed, finalLogs, getLiveStatus().BackupID, getLiveStatus().CompletedItems)
+			_ = repo.FinishBackupRun(run.ID, StatusFailed, finalLogs, backupID, completedItems)
 		} else {
-			_ = repo.FinishBackupRun(run.ID, StatusSuccess, finalLogs, getLiveStatus().BackupID, getLiveStatus().CompletedItems)
+			_ = repo.FinishBackupRun(run.ID, StatusSuccess, finalLogs, backupID, completedItems)
 		}
 
 		clearLiveStatus()

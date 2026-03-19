@@ -27,6 +27,7 @@ type Config struct {
 }
 
 var cfg *Config
+var configPath string
 
 func Load(path string) error {
 	data, err := os.ReadFile(path)
@@ -40,10 +41,16 @@ func Load(path string) error {
 	}
 
 	cfg = &c
+	configPath = path
 	return nil
 }
+
 func Get() *Config {
 	return cfg
+}
+
+func Path() string {
+	return configPath
 }
 
 func FindVM(id int) *VM {

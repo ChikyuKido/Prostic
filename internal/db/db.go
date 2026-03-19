@@ -4,27 +4,28 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 
+	"prostic/internal/config"
 	"prostic/internal/db/models"
 	"prostic/internal/util"
 )
 
 var (
-	instance      *gorm.DB
-	initErr       error
-	once          sync.Once
-	defaultDBPath = filepath.Join("data", "prostic.db")
+	instance *gorm.DB
+	initErr  error
+	once     sync.Once
 )
 
 func Get() (*gorm.DB, error) {
 	once.Do(func() {
 		dbPath := os.Getenv("PROSTIC_DB_PATH")
 		if dbPath == "" {
-			dbPath = defaultDBPath
+			dbPath = defaultDBPath()
 		}
 
 		dir := filepath.Dir(dbPath)
@@ -49,6 +50,20 @@ func Get() (*gorm.DB, error) {
 	})
 
 	return instance, initErr
+}
+
+func defaultDBPath() string {
+	configName := "prostic"
+	if path := config.Path(); path != "" {
+		base := filepath.Base(path)
+		ext := filepath.Ext(base)
+		configName = strings.TrimSuffix(base, ext)
+		if configName == "" {
+			configName = "prostic"
+		}
+	}
+
+	return filepath.Join("data", configName+".db")
 }
 
 func ensureDefaultSettings() error {

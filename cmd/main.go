@@ -2,8 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/urfave/cli/v2"
 	"os"
+
+	"github.com/urfave/cli/v2"
 
 	"prostic/internal/config"
 	"prostic/internal/restic"
@@ -41,8 +42,16 @@ func main() {
 			{
 				Name:  "server",
 				Usage: "Start the web server",
+				Flags: []cli.Flag{
+					&cli.IntFlag{
+						Name:  "port",
+						Value: 8080,
+						Usage: "Port for the web server",
+					},
+				},
 				Action: func(c *cli.Context) error {
-					if err := server.Start(":8080"); err != nil {
+					addr := fmt.Sprintf(":%d", c.Int("port"))
+					if err := server.Start(addr); err != nil {
 						return cli.Exit("Failed to start server: "+err.Error(), 1)
 					}
 					return nil
